@@ -1,0 +1,78 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubefirst-console
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  project: default
+  source:
+    repoURL: https://kubefirst.github.io/charts
+    targetRevision: 2.1.7
+    chart: console
+    helm:
+      values: |-
+        env:
+          ARGO_CD_URL:
+            value: "https://argocd.2farm.dev"
+          ARGO_WORKFLOWS_URL:
+            value: "https://argo.2farm.dev"
+          ATLANTIS_URL:
+            value: "https://atlantis.2farm.dev"
+          CLOUD:
+            value: "aws"
+          CLUSTER_ID:
+            value: "b3wjqi"
+          CLUSTER_TYPE:
+            value: "mgmt"
+          DOMAIN_NAME:
+            value: "2farm.dev"
+          GIT_PROVIDER:
+            value: "github"
+          GITHUB_OWNER:
+            value: "gosquid-io"
+          KUBEFIRST_VERSION:
+            value: "v2.0.8"
+          KUBEFIRST_TEAM:
+            value: ""
+          METAPHOR_DEVELOPMENT_URL:
+            value: "https://metaphor-development.2farm.dev"
+          METAPHOR_STAGING_URL:
+            value: "https://metaphor-staging.2farm.dev"
+          METAPHOR_PRODUCTION_URL:
+            value: "https://metaphor-production.2farm.dev"
+          USE_TELEMETRY:
+            value: ""
+          VAULT_URL:
+            value: "https://vault.2farm.dev"
+        ingress:
+          enabled: true
+          annotations:
+            kubernetes.io/ingress.class: nginx
+            cert-manager.io/cluster-issuer: "letsencrypt-prod"
+            # nginx.ingress.kubernetes.io/auth-signin: "https://vouch.2farm.dev/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err"
+            # nginx.ingress.kubernetes.io/auth-url: https://vouch.2farm.dev/validate
+            # nginx.ingress.kubernetes.io/auth-response-headers: X-Vouch-User
+            # nginx.ingress.kubernetes.io/auth-snippet: |
+            #   auth_request_set $auth_resp_jwt $upstream_http_x_vouch_jwt;
+            #   auth_request_set $auth_resp_err $upstream_http_x_vouch_err;
+            #   auth_request_set $auth_resp_failcount $upstream_http_x_vouch_failcount;
+          hosts:
+            - host: kubefirst.2farm.dev
+              paths:
+                - path: /
+                  pathType: ImplementationSpecific
+          tls:
+            - secretName: kubefirst-tls
+              hosts:
+                - kubefirst.2farm.dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kubefirst
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

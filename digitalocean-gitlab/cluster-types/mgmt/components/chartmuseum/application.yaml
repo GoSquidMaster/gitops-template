@@ -12,36 +12,34 @@ spec:
     targetRevision: 3.9.3
     helm:
       values: |-
-        serviceAccount:
-          create: true
-          name: chartmuseum
-          annotations:
-            eks.amazonaws.com/role-arn: 'arn:aws:iam::366414632657:role/chartmuseum-allfarms'
         env:
           open:
             AUTH_ANONYMOUS_GET: true
-            AWS_SDK_LOAD_CONFIG: true
             STORAGE: amazon
-            STORAGE_AMAZON_BUCKET: k1-artifacts-allfarms-b3wjqi
+            STORAGE_AMAZON_BUCKET: <KUBEFIRST_STATE_STORE_BUCKET>
             STORAGE_AMAZON_PREFIX: kubefirst-charts
-            STORAGE_AMAZON_REGION: ap-southeast-1
+            STORAGE_AMAZON_REGION: us-east-1
+            STORAGE_AMAZON_ENDPOINT: <KUBEFIRST_STATE_STORE_BUCKET_HOSTNAME>
             DISABLE_API: false
           existingSecret: chartmuseum-secrets
           existingSecretMappings:
             BASIC_AUTH_USER: BASIC_AUTH_USER
             BASIC_AUTH_PASS: BASIC_AUTH_PASS
+            AWS_ACCESS_KEY_ID: AWS_ACCESS_KEY_ID
+            AWS_SECRET_ACCESS_KEY: AWS_SECRET_ACCESS_KEY
         ingress:
           enabled: true
+          pathType: "Prefix"
           annotations:
             cert-manager.io/cluster-issuer: "letsencrypt-prod"
           hosts:
-            - name: chartmuseum.2farm.dev
+            - name: chartmuseum.<DOMAIN_NAME>
               path: /
               tls: true
               tlsSecret: chartmuseum-tls
           ingressClassName: nginx
     chart: chartmuseum
-  destination: 
+  destination:
     server: https://kubernetes.default.svc
     namespace: chartmuseum
   syncPolicy:

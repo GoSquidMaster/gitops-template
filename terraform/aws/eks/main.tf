@@ -77,7 +77,7 @@ module "eks" {
 
   eks_managed_node_group_defaults = {
     ami_type       = "AL2_x86_64"
-    instance_types = ["m5.large"]
+    instance_types = ["t3a.medium"]
 
     # We are using the IRSA created below for permissions
     # However, we have to deploy with the policy attached FIRST (when creating a fresh cluster)
@@ -90,14 +90,14 @@ module "eks" {
   eks_managed_node_groups = {
     # Default node group - as provided by AWS EKS
     default_node_group = {
-      desired_size = 6
-      min_size     = 6
+      desired_size = 4
+      min_size     = 4
       max_size     = 7
       # By default, the module creates a launch template to ensure tags are propagated to instances, etc.,
       # so we need to disable it to use the default template provided by the AWS EKS managed node group service
       use_custom_launch_template = false
 
-      disk_size = 50
+      disk_size = 20
     }
   }
 

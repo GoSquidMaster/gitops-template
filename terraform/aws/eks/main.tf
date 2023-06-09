@@ -55,9 +55,9 @@ data "aws_caller_identity" "current" {}
 data "aws_availability_zones" "available" {}
 
 locals {
-  name            = "allfarms"
+  name            = "<CLUSTER_NAME>"
   cluster_version = "1.23"
-  region          = "ap-southeast-1"
+  region          = "<CLOUD_REGION>"
 
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
@@ -78,7 +78,6 @@ module "eks" {
   cluster_name                   = local.name
   cluster_version                = local.cluster_version
   cluster_endpoint_public_access = true
-
   create_kms_key                 = false
   cluster_encryption_config      = {}
 
@@ -118,17 +117,11 @@ module "eks" {
   subnet_ids               = module.vpc.private_subnets
   control_plane_subnet_ids = module.vpc.intra_subnets
 
-  aws_auth_roles = [
-    # We need to add in the Karpenter node IAM role for nodes launched by Karpenter
-    {
-      rolearn  = module.eks_blueprints_addons.karpenter.node_iam_role_arn
-      username = "system:node:{{EC2PrivateDNSName}}"
-      groups = [
-        "system:bootstrappers",
-        "system:nodes",
-      ]
-    },
-  ]
+  manage_aws_auth_configmap = false
+
+  eks_managed_node_group_defaults = {
+    ami_type       = "AL2_x86_64"
+    instance_types = ["m5.large"]
 
   fargate_profiles = merge(
     { for i in range(3) :
@@ -151,9 +144,15 @@ module "eks" {
     },
   )
 
-  # eks_managed_node_group_defaults = {
-  #   ami_type       = "AL2_x86_64"
-  #   instance_types = ["t3a.medium"]
+  eks_managed_node_groups = {
+    # Default node group - as provided by AWS EKS
+    default_node_group = {
+      desired_size = 6
+      min_size     = 6
+      max_size     = 7
+      # By default, the module creates a launch template to ensure tags are propagated to instances, etc.,
+      # so we need to disable it to use the default template provided by the AWS EKS managed node group service
+      use_custom_launch_template = false
 
   #   # We are using the IRSA created below for permissions
   #   # However, we have to deploy with the policy attached FIRST (when creating a fresh cluster)
@@ -318,7 +317,7 @@ resource "kubectl_manifest" "karpenter_example_deployment" {
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.0"
+  version = "4.0.2"
 
   name = local.name
   cidr = local.vpc_cidr
@@ -328,9 +327,8 @@ module "vpc" {
   public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
   intra_subnets   = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 52)]
 
-  enable_ipv6                     = true
-  # assign_ipv6_address_on_creation = true
-  create_egress_only_igw          = true
+  enable_ipv6            = true
+  create_egress_only_igw = true
 
   public_subnet_ipv6_prefixes  = [0, 1, 2]
   private_subnet_ipv6_prefixes = [3, 4, 5]
@@ -356,9 +354,9 @@ module "vpc" {
 
 module "vpc_cni_irsa" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.0"
+  version = "5.20.0"
 
-  role_name             = upper("VPC-CNI-IRSA-allfarms")
+  role_name             = upper("VPC-CNI-IRSA-<CLUSTER_NAME>")
   attach_vpc_cni_policy = true
   role_policy_arns = {
     AmazonEKS_CNI_Policy = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
@@ -377,9 +375,9 @@ module "vpc_cni_irsa" {
 
 module "aws_ebs_csi_driver" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.0"
+  version = "5.20.0"
 
-  role_name = upper("EBS-CSI-DRIVER-allfarms")
+  role_name = upper("EBS-CSI-DRIVER-<CLUSTER_NAME>")
 
   role_policy_arns = {
     admin = aws_iam_policy.aws_ebs_csi_driver.arn
@@ -539,7 +537,7 @@ EOT
 
 module "argo_workflows" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.0"
+  version = "5.20.0"
 
   role_name = "argo-${local.name}"
   role_policy_arns = {
@@ -558,7 +556,7 @@ module "argo_workflows" {
 
 module "atlantis" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.0"
+  version = "5.20.0"
 
   role_name = "atlantis-${local.name}"
   role_policy_arns = {
@@ -576,7 +574,7 @@ module "atlantis" {
 
 module "cert_manager" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.0"
+  version = "5.20.0"
 
   role_name = "cert-manager-${local.name}"
   role_policy_arns = {
@@ -626,7 +624,7 @@ EOT
 
 module "chartmuseum" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.0"
+  version = "5.20.0"
 
   role_name = "chartmuseum-${local.name}"
   role_policy_arns = {
@@ -644,7 +642,7 @@ module "chartmuseum" {
 
 module "ecr_publish_permissions_sync" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.0"
+  version = "5.20.0"
 
   role_name = "ecr-publish-permissions-sync-${local.name}"
   role_policy_arns = {
@@ -663,7 +661,7 @@ module "ecr_publish_permissions_sync" {
 
 module "external_dns" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.0"
+  version = "5.20.0"
 
   role_name = "external-dns-${local.name}"
   role_policy_arns = {
@@ -714,7 +712,7 @@ EOT
 
 module "vault" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.0"
+  version = "5.20.0"
 
   role_name = "vault-${local.name}"
   role_policy_arns = {

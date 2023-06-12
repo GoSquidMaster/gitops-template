@@ -56,7 +56,7 @@ data "aws_availability_zones" "available" {}
 
 locals {
   name            = "<CLUSTER_NAME>"
-  cluster_version = "1.23"
+  cluster_version = "1.27"
   region          = "<CLOUD_REGION>"
 
   vpc_cidr = "10.0.0.0/16"
@@ -85,11 +85,42 @@ module "eks" {
   create_node_security_group    = false
 
   manage_aws_auth_configmap = true
+  aws_auth_roles = [
+    # We need to add in the Karpenter node IAM role for nodes launched by Karpenter
+    {
+      rolearn  = module.karpenter.role_arn
+      username = "system:node:{{EC2PrivateDNSName}}"
+      groups = [
+        "system:bootstrappers",
+        "system:nodes",
+      ]
+    },
+  ]
 
   cluster_addons = {
     coredns = {
       configuration_values = jsonencode({
         computeType = "Fargate"
+        # Ensure that the we fully utilize the minimum amount of resources that are supplied by
+        # Fargate https://docs.aws.amazon.com/eks/latest/userguide/fargate-pod-configuration.html
+        # Fargate adds 256 MB to each pod's memory reservation for the required Kubernetes
+        # components (kubelet, kube-proxy, and containerd). Fargate rounds up to the following
+        # compute configuration that most closely matches the sum of vCPU and memory requests in
+        # order to ensure pods always have the resources that they need to run.
+        resources = {
+          limits = {
+            cpu = "0.25"
+            # We are targetting the smallest Task size of 512Mb, so we subtract 256Mb from the
+            # request/limit to ensure we can fit within that task
+            memory = "256M"
+          }
+          requests = {
+            cpu = "0.25"
+            # We are targetting the smallest Task size of 512Mb, so we subtract 256Mb from the
+            # request/limit to ensure we can fit within that task
+            memory = "256M"
+          }
+        }
       })
     }
     aws-ebs-csi-driver = {
@@ -191,7 +222,47 @@ resource "helm_release" "karpenter" {
   repository_username = data.aws_ecrpublic_authorization_token.token.user_name
   repository_password = data.aws_ecrpublic_authorization_token.token.password
   chart               = "karpenter"
-  version             = "v0.21.1"
+  version             = "v0.22.0"
+
+  # Memory request/limit set to maximize the capacity provisioned by Fargate
+  # 2G allocated - 256Mb overhead = 1792Mb
+  # values = [
+  #   <<-EOT
+  #     controller:
+  #       resources:
+  #         requests:
+  #           memory: "1792M"
+  #         limits:
+  #           memory: "1792M"
+  #     nodeSelector:
+  #       eks.amazonaws.com/compute-type: fargate
+  #     settings:
+  #       aws:
+  #         clusterName: ${module.eks.cluster_name}
+  #         clusterEndpoint: ${module.eks.cluster_endpoint}
+  #         defaultInstanceProfile: ${module.karpenter.instance_profile_name}
+  #         interruptionQueueName: ${module.karpenter.queue_name}
+  #     serviceAccount:
+  #       annotations:
+  #         eks.amazonaws.com/role-arn: ${module.karpenter.irsa_arn}
+  #   EOT
+  # ]
+
+  set {
+    name  = "controller.resources.requests.memory"
+    value = "1792M"
+  }
+
+  set {
+    name  = "controller.resources.limits.memory"
+    value = "1792M"
+  }
+
+
+  set {
+    name  = "nodeSelector.eks\\.amazonaws\\.com/compute-type"
+    value = "fargate"
+  }
 
   set {
     name  = "settings.aws.clusterName"
@@ -236,26 +307,6 @@ resource "kubectl_manifest" "karpenter_provisioner" {
       providerRef:
         name: default
       ttlSecondsAfterEmpty: 30
-  YAML
-
-  depends_on = [
-    helm_release.karpenter
-  ]
-}
-
-resource "kubectl_manifest" "karpenter_node_template" {
-  yaml_body = <<-YAML
-    apiVersion: karpenter.k8s.aws/v1alpha1
-    kind: AWSNodeTemplate
-    metadata:
-      name: default
-    spec:
-      subnetSelector:
-        karpenter.sh/discovery: ${module.eks.cluster_name}
-      securityGroupSelector:
-        karpenter.sh/discovery: ${module.eks.cluster_name}
-      tags:
-        karpenter.sh/discovery: ${module.eks.cluster_name}
   YAML
 
   depends_on = [

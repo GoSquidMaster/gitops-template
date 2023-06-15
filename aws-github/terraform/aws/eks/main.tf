@@ -289,9 +289,14 @@ resource "helm_release" "karpenter" {
     value = module.karpenter.queue_name
   }
 
+  # set {
+  #   name  = "settings.aws.enablePodENI"
+  #   value = "true"
+  # }
+
   set {
-    name  = "settings.aws.enablePodENI"
-    value = "true"
+    name  = "settings.aws.reservedENIs"
+    value = "1"
   }
 }
 

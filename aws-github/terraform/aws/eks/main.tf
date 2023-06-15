@@ -288,6 +288,11 @@ resource "helm_release" "karpenter" {
     name  = "settings.aws.interruptionQueueName"
     value = module.karpenter.queue_name
   }
+
+  set {
+    name  = "settings.aws.enablePodENI"
+    value = "true"
+  }
 }
 
 resource "kubectl_manifest" "karpenter_provisioner" {
@@ -301,6 +306,9 @@ resource "kubectl_manifest" "karpenter_provisioner" {
         - key: karpenter.sh/capacity-type
           operator: In
           values: ["spot"]
+        - key: "karpenter.k8s.aws/instance-hypervisor"
+          operator: In
+          values: ["nitro"]
       limits:
         resources:
           cpu: 1000

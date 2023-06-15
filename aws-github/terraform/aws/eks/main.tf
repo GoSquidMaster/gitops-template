@@ -316,7 +316,7 @@ resource "kubectl_manifest" "karpenter_provisioner" {
         name: default
       ttlSecondsAfterEmpty: 30
       kubeletConfiguration:
-        maxPods: 100
+        maxPods: 110
   YAML
 
   depends_on = [

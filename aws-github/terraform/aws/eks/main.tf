@@ -222,7 +222,7 @@ resource "helm_release" "karpenter" {
   repository_username = data.aws_ecrpublic_authorization_token.token.user_name
   repository_password = data.aws_ecrpublic_authorization_token.token.password
   chart               = "karpenter"
-  version             = "v0.22.0"
+  version             = "v0.28.0"
 
   # Memory request/limit set to maximize the capacity provisioned by Fargate
   # 2G allocated - 256Mb overhead = 1792Mb
@@ -307,6 +307,8 @@ resource "kubectl_manifest" "karpenter_provisioner" {
       providerRef:
         name: default
       ttlSecondsAfterEmpty: 30
+      kubeletConfiguration:
+        maxPods: 100
   YAML
 
   depends_on = [

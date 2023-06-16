@@ -315,6 +315,12 @@ resource "kubectl_manifest" "karpenter_provisioner" {
         - key: karpenter.sh/capacity-type
           operator: In
           values: ["spot"]
+        - key: "karpenter.k8s.aws/instance-family"
+          operator: In
+          values: ["t3a"]
+        - key: "karpenter.k8s.aws/instance-size"
+          operator: NotIn
+          values: ["nano", "micro"]
         - key: "karpenter.k8s.aws/instance-hypervisor"
           operator: In
           values: ["nitro"]

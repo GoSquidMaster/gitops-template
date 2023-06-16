@@ -148,48 +148,52 @@ module "eks" {
   subnet_ids               = module.vpc.private_subnets
   control_plane_subnet_ids = module.vpc.intra_subnets
 
-  fargate_profiles = merge(
-    { for i in range(3) :
-      "kube-system-${element(split("-", local.azs[i]), 2)}" => {
-        selectors = [
-          { namespace = "kube-system" }
-        ]
-        # We want to create a profile per AZ for high availability
-        subnet_ids = [element(module.vpc.private_subnets, i)]
-      }
-    },
-    { for i in range(3) :
-      "karpenter-${element(split("-", local.azs[i]), 2)}" => {
-        selectors = [
-          { namespace = "karpenter" }
-        ]
-        # We want to create a profile per AZ for high availability
-        subnet_ids = [element(module.vpc.private_subnets, i)]
-      }
-    },
-  )
+  # fargate_profiles = merge(
+  #   { for i in range(3) :
+  #     "kube-system-${element(split("-", local.azs[i]), 2)}" => {
+  #       selectors = [
+  #         { namespace = "kube-system" }
+  #       ]
+  #       # We want to create a profile per AZ for high availability
+  #       subnet_ids = [element(module.vpc.private_subnets, i)]
+  #     }
+  #   },
+  #   { for i in range(3) :
+  #     "karpenter-${element(split("-", local.azs[i]), 2)}" => {
+  #       selectors = [
+  #         { namespace = "karpenter" }
+  #       ]
+  #       # We want to create a profile per AZ for high availability
+  #       subnet_ids = [element(module.vpc.private_subnets, i)]
+  #     }
+  #   },
+  # )
+  eks_managed_node_group_defaults = {
+    ami_type       = "AL2_x86_64"
+    instance_types = ["t3a.medium"]
 
-  #   # We are using the IRSA created below for permissions
-  #   # However, we have to deploy with the policy attached FIRST (when creating a fresh cluster)
-  #   # and then turn this off after the cluster/node group is created. Without this initial policy,
-  #   # the VPC CNI fails to assign IPs and nodes cannot join the cluster
-  #   # See https://github.com/aws/containers-roadmap/issues/1666 for more context
-  #   iam_role_attach_cni_policy = true
-  # }
+    # We are using the IRSA created below for permissions
+    # However, we have to deploy with the policy attached FIRST (when creating a fresh cluster)
+    # and then turn this off after the cluster/node group is created. Without this initial policy,
+    # the VPC CNI fails to assign IPs and nodes cannot join the cluster
+    # See https://github.com/aws/containers-roadmap/issues/1666 for more context
+    iam_role_attach_cni_policy = true
+  }
 
-  # eks_managed_node_groups = {
-  #   # Default node group - as provided by AWS EKS
-  #   default_node_group = {
-  #     desired_size = 4
-  #     min_size     = 4
-  #     max_size     = 7
-  #     # By default, the module creates a launch template to ensure tags are propagated to instances, etc.,
-  #     # so we need to disable it to use the default template provided by the AWS EKS managed node group service
-  #     use_custom_launch_template = false
+  eks_managed_node_groups = {
+    # Default node group - as provided by AWS EKS
+    default_node_group = {
+      desired_size = 1
+      min_size     = 1
+      max_size     = 1
+      # By default, the module creates a launch template to ensure tags are propagated to instances, etc.,
+      # so we need to disable it to use the default template provided by the AWS EKS managed node group service
+      use_custom_launch_template = false
 
-  #     disk_size = 20
-  #   }
-  # }
+      disk_size = 20
+    }
+  }
+
 
   tags = merge(local.tags, {
     # NOTE - if creating multiple security groups with this module, only tag the
@@ -259,10 +263,10 @@ resource "helm_release" "karpenter" {
   }
 
 
-  set {
-    name  = "nodeSelector.eks\\.amazonaws\\.com/compute-type"
-    value = "fargate"
-  }
+  # set {
+  #   name  = "nodeSelector.eks\\.amazonaws\\.com/compute-type"
+  #   value = "fargate"
+  # }
 
   set {
     name  = "settings.aws.clusterName"

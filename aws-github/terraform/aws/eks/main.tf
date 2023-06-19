@@ -183,9 +183,23 @@ module "eks" {
   eks_managed_node_groups = {
     # Default node group - as provided by AWS EKS
     default_node_group = {
+      instance_types = ["t3a.medium"]
       desired_size = 1
       min_size     = 1
-      max_size     = 5
+      max_size     = 2
+      # By default, the module creates a launch template to ensure tags are propagated to instances, etc.,
+      # so we need to disable it to use the default template provided by the AWS EKS managed node group service
+      use_custom_launch_template = false
+
+      disk_size = 20
+    }
+
+    spot_node_group = {
+      instance_types = ["t3a.medium"]
+      capacity_type   = "SPOT"
+      desired_size = 1
+      min_size     = 1
+      max_size     = 2
       # By default, the module creates a launch template to ensure tags are propagated to instances, etc.,
       # so we need to disable it to use the default template provided by the AWS EKS managed node group service
       use_custom_launch_template = false
@@ -252,15 +266,15 @@ resource "helm_release" "karpenter" {
   #   EOT
   # ]
 
-  set {
-    name  = "controller.resources.requests.memory"
-    value = "1792M"
-  }
+  # set {
+  #   name  = "controller.resources.requests.memory"
+  #   value = "1792M"
+  # }
 
-  set {
-    name  = "controller.resources.limits.memory"
-    value = "1792M"
-  }
+  # set {
+  #   name  = "controller.resources.limits.memory"
+  #   value = "1792M"
+  # }
 
 
   # set {
@@ -329,7 +343,9 @@ resource "kubectl_manifest" "karpenter_provisioner" {
           cpu: 1000
       providerRef:
         name: default
-      ttlSecondsAfterEmpty: 30
+      consolidation:
+        enabled: true
+      # ttlSecondsAfterEmpty: 30
       kubeletConfiguration:
         maxPods: 110
   YAML

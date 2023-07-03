@@ -58,13 +58,13 @@ module "metaphor" {
   team_admins_id     = github_team.admins.id
 }
 
-module "allfarms" {
-  source = "./modules/repository"
+# module "allfarms" {
+#   source = "./modules/repository"
 
-  repo_name          = "AllFarms-ms"
-  archive_on_destroy = true
-  auto_init          = false # set to false if importing an existing repository
-  create_ecr         = true
-  team_developers_id = github_team.developers.id
-  team_admins_id     = github_team.admins.id
-}
+#   repo_name          = "AllFarms-ms"
+#   archive_on_destroy = true
+#   auto_init          = false # set to false if importing an existing repository
+#   create_ecr         = true
+#   team_developers_id = github_team.developers.id
+#   team_admins_id     = github_team.admins.id
+# }

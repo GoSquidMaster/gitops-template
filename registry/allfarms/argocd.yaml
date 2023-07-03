@@ -8,8 +8,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'git@github.com:gosquid-io/gitops.git'
-    path: registry/allfarms/components/argocd
+    repoURL: '<GITOPS_REPO_GIT_URL>'
+    path: registry/<GITOPS_REPO_GIT_URL>/components/argocd
     targetRevision: HEAD
   destination:
     server: 'https://kubernetes.default.svc'

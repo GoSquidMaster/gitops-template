@@ -183,28 +183,28 @@ module "eks" {
   eks_managed_node_groups = {
     # Default node group - as provided by AWS EKS
     default_node_group = {
-      instance_types = ["t3a.medium"]
-      desired_size = 1
-      min_size     = 1
-      max_size     = 2
+      instance_types = ["m5.large"]
+      desired_size   = 1
+      min_size       = 1
+      max_size       = 2
       # By default, the module creates a launch template to ensure tags are propagated to instances, etc.,
       # so we need to disable it to use the default template provided by the AWS EKS managed node group service
       use_custom_launch_template = false
 
-      disk_size = 20
+      disk_size = 50
     }
 
     spot_node_group = {
-      instance_types = ["t3a.medium"]
-      capacity_type   = "SPOT"
-      desired_size = 1
-      min_size     = 1
-      max_size     = 2
+      instance_types = ["t3a.large"]
+      capacity_type  = "SPOT"
+      desired_size   = 1
+      min_size       = 1
+      max_size       = 2
       # By default, the module creates a launch template to ensure tags are propagated to instances, etc.,
       # so we need to disable it to use the default template provided by the AWS EKS managed node group service
       use_custom_launch_template = false
 
-      disk_size = 20
+      disk_size = 50
     }
   }
 
@@ -241,6 +241,7 @@ resource "helm_release" "karpenter" {
   repository_password = data.aws_ecrpublic_authorization_token.token.password
   chart               = "karpenter"
   version             = "v0.28.0"
+  timeout             = 7200
 
   # Memory request/limit set to maximize the capacity provisioned by Fargate
   # 2G allocated - 256Mb overhead = 1792Mb
@@ -333,8 +334,8 @@ resource "kubectl_manifest" "karpenter_provisioner" {
           operator: In
           values: ["t3a"]
         - key: "karpenter.k8s.aws/instance-size"
-          operator: NotIn
-          values: ["nano", "micro"]
+          operator: In
+          values: ["large"]
         - key: "karpenter.k8s.aws/instance-hypervisor"
           operator: In
           values: ["nitro"]
@@ -347,7 +348,7 @@ resource "kubectl_manifest" "karpenter_provisioner" {
         enabled: true
       # ttlSecondsAfterEmpty: 30
       kubeletConfiguration:
-        maxPods: 110
+        maxPods: 60
   YAML
 
   depends_on = [
@@ -366,6 +367,12 @@ resource "kubectl_manifest" "karpenter_node_template" {
         karpenter.sh/discovery: ${module.eks.cluster_name}
       securityGroupSelector:
         karpenter.sh/discovery: ${module.eks.cluster_name}
+      blockDeviceMappings:
+        - deviceName: /dev/xvda
+          ebs:
+            volumeSize: 50Gi
+            volumeType: gp3
+            deleteOnTermination: true
       tags:
         karpenter.sh/discovery: ${module.eks.cluster_name}
   YAML

@@ -8,8 +8,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: git@github.com:GoSquid-io/gitops.git
-    path: registry/allfarms/components/reloader
+    repoURL: <GITOPS_REPO_GIT_URL>
+    path: registry/<GITOPS_REPO_GIT_URL>/components/reloader
     targetRevision: HEAD
   destination:
     server: https://kubernetes.default.svc

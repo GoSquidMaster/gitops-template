@@ -1,0 +1,36 @@
+apiVersion: v2
+dependencies:
+- name: dbmigrator
+  version: 1.0.0-rc.676e1f9
+  repository: http://chartmuseum.chartmuseum.svc.cluster.local:8080
+- name: authserver
+  version: 1.0.0-rc.9a2a869
+  repository: http://chartmuseum.chartmuseum.svc.cluster.local:8080
+- name: administration
+  version: 1.0.0-rc.53fcf06
+  repository: http://chartmuseum.chartmuseum.svc.cluster.local:8080
+- name: identity
+  version: 1.0.0-rc.9611eb4
+  repository: http://chartmuseum.chartmuseum.svc.cluster.local:8080
+- name: saas
+  version: 1.0.0-rc.b79d71e
+  repository: http://chartmuseum.chartmuseum.svc.cluster.local:8080
+- name: farmer
+  version: 1.0.0-rc.9a2a869
+  repository: http://chartmuseum.chartmuseum.svc.cluster.local:8080
+- name: gateway-web
+  version: 1.0.0-rc.534007b
+  repository: http://chartmuseum.chartmuseum.svc.cluster.local:8080
+- name: public-gateway-web
+  version: 1.0.0-rc.7984ba5
+  repository: http://chartmuseum.chartmuseum.svc.cluster.local:8080
+- name: web
+  version: 1.0.0-rc.b79d71e
+  repository: http://chartmuseum.chartmuseum.svc.cluster.local:8080
+- name: public-web
+  version: 1.0.0-rc.2a3a21d
+  repository: http://chartmuseum.chartmuseum.svc.cluster.local:8080
+description: AllFarms application
+name: allfarms-development
+type: application
+version: 0.1.0

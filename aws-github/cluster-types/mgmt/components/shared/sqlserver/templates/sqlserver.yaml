@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+spec:
+  serviceName: {{ .Release.Name }}-{{ .Chart.Name }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-{{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-{{ .Chart.Name }}
+    spec:
+      securityContext:
+        runAsUser: 0
+      containers:
+        - image: mcr.microsoft.com/azure-sql-edge
+          name: {{ .Release.Name }}-{{ .Chart.Name }}
+{{- if eq .Release.Name "shared-sqlserver" }}
+          volumeMounts:
+            - name: sqlserver-persistent-storage
+              mountPath: "/var/opt/mssql"
+{{- end }}
+          ports:
+            - name: sqlserver
+              containerPort: 1433
+          env:
+          - name: SA_PASSWORD
+            value: {{ .Values.containers.sql.saPassword}}
+          - name: ACCEPT_EULA
+            value: "Y"
+{{- if eq .Release.Name "shared-sqlserver" }}
+      volumes:
+        - name: sqlserver-persistent-storage
+          persistentVolumeClaim:
+            claimName: sql-server-pvc
+{{- end }}

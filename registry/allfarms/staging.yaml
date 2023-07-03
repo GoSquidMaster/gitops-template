@@ -4,14 +4,14 @@ metadata:
   name: staging
   namespace: argocd
   finalizers:
-  - resources-finalizer.argocd.argoproj.io
+    - resources-finalizer.argocd.argoproj.io
   annotations:
     argocd.argoproj.io/sync-wave: '40'
 spec:
   project: default
   source:
-    repoURL: git@github.com:GoSquid-io/gitops.git
-    path: registry/allfarms/components/staging
+    repoURL: <GITOPS_REPO_GIT_URL>
+    path: registry/<GITOPS_REPO_GIT_URL>/components/staging
     targetRevision: HEAD
   destination:
     server: https://kubernetes.default.svc

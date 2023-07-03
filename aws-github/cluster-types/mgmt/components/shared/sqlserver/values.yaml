@@ -1,0 +1,5 @@
+awsElasticBlockStore:
+  volumeID: vol-00e978ff2e5328b59
+containers:
+  sql:
+    saPassword: "myPassw@rd"

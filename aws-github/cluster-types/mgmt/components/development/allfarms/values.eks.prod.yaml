@@ -1,0 +1,384 @@
+# auth-server sub-chart override
+authserver:
+  config:
+    selfUrl: https://auth.2farm.dev
+    corsOrigins: https://www.2farm.dev,https://admin.2farm.dev,https://api.2farm.dev,https://public-api.2farm.dev,https://id.2farm.dev,https://administration.2farm.dev,https://saas.2farm.dev,https://allfarms-st-product
+    allowedRedirectUrls: https://www.2farm.dev,https://admin.2farm.dev
+    disablePii: 'false'
+    identityService:
+      connString: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_Identity;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+    administrationService:
+      connString: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_Administration;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+    saasService:
+      connString: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_Saas;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+    authServer:
+      authority: https://auth.2farm.dev
+      requireHttpsMetadata: 'false'
+      swaggerClientId: WebGateway_Swagger
+    dotnetEnv: Production
+    redisHost: allfarms-st-redis
+    rabbitmqHost: allfarms-st-rabbitmq
+    elasticsearchUrl: http://allfarms-st-elasticsearch
+  ingress:
+    host: auth.2farm.dev
+  image:
+    repository: 366414632657.dkr.ecr.ap-southeast-1.amazonaws.com/allfarms-app-authserver
+    tag: latest
+    pullPolicy: Always
+
+# identity-service sub-chart override
+identity:
+  config:
+    selfUrl: https://id.2farm.dev
+    corsOrigins: https://api.2farm.dev
+    connectionStrings:
+      identityService: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_Identity;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+      administrationService: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_Administration;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+      saasService: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_Saas;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+    authServer:
+      authority: https://auth.2farm.dev
+      requireHttpsMetadata: 'false'
+    dotnetEnv: Production
+    redisHost: allfarms-st-redis
+    rabbitmqHost: allfarms-st-rabbitmq
+    elasticsearchUrl: http://allfarms-st-elasticsearch
+  openIdDict: #Seed applications and resources
+    applications:
+      authServerRootUrl: https://auth.2farm.dev/
+      # angularRootUrl: https://allfarms-st-angular/
+      webRootUrl: https://admin.2farm.dev
+      # blazorRootUrl: https://allfarms-st-blazor/
+      # blazorServerRootUrl: https://allfarms-st-blazor-server/
+      publicWebRootUrl: https://www.2farm.dev/
+      webGatewayRootUrl: https://api.2farm.dev/
+      publicWebGatewayRootUrl: https://public-api.2farm.dev/
+    resources:
+      accountServiceRootUrl: https://auth.2farm.dev/
+      administrationServiceRootUrl: https://administration.2farm.dev/
+      identityServiceRootUrl: https://id.2farm.dev/
+      saasServiceRootUrl: https://saas.2farm.dev/
+      # productServiceRootUrl: https://allfarms-st-product/
+  ingress:
+    host: id.2farm.dev
+  image:
+    repository: 366414632657.dkr.ecr.ap-southeast-1.amazonaws.com/allfarms-service-identity
+    tag: latest
+    pullPolicy: Always
+
+# administration-service sub-chart override
+administration:
+  config:
+    selfUrl: https://administration.2farm.dev
+    corsOrigins: https://api.2farm.dev,https://public-api.2farm.dev
+    connectionStrings:
+      administrationService: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_Administration;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+      saasService: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_Saas;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+    authServer:
+      authority: https://auth.2farm.dev
+      requireHttpsMetadata: 'false'
+      swaggerClientId: WebGateway_Swagger
+    remoteServices:
+      abpIdentityBaseUrl: https://id.2farm.dev
+      useCurrentToken: 'false'
+    dotnetEnv: Production
+    redisHost: allfarms-st-redis
+    rabbitmqHost: allfarms-st-rabbitmq
+    elasticsearchUrl: http://allfarms-st-elasticsearch
+  synchedCommunication: # Used for server-to-server (client-credentials) communication with identityService for user permissions
+    authority: https://auth.2farm.dev
+    requireHttps: 'false'
+    validateIssuerName: 'false'
+    validateEndpoints: 'false'
+  ingress:
+    host: administration.2farm.dev
+  image:
+    repository: 366414632657.dkr.ecr.ap-southeast-1.amazonaws.com/allfarms-service-administration
+    tag: latest
+    pullPolicy: Always
+
+# saas-service sub-chart override
+saas:
+  config:
+    selfUrl: https://saas.2farm.dev
+    corsOrigins: https://allfarms-st-gateway-web
+    connectionStrings:
+      administrationService: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_Administration;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+      saasService: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_Saas;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+    authServer:
+      authority: https://auth.2farm.dev
+      requireHttpsMetadata: 'false'
+      swaggerClientId: WebGateway_Swagger
+    dotnetEnv: Production
+    redisHost: allfarms-st-redis
+    rabbitmqHost: allfarms-st-rabbitmq
+    elasticsearchUrl: http://allfarms-st-elasticsearch
+  ingress:
+    host: saas.2farm.dev
+  image:
+    repository: 366414632657.dkr.ecr.ap-southeast-1.amazonaws.com/allfarms-service-saas
+    tag: latest
+    pullPolicy: Always
+
+# product-service sub-chart override
+# product:
+#   config:
+#     selfUrl: https://allfarms-st-product
+#     corsOrigins: https://api.2farm.dev,https://api.2farm.dev-public
+#     connectionStrings:
+#       productService: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_ProductService;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+#       administrationService: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_Administration;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+#       saasService: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_Saas;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+#     authServer:
+#       authority: https://auth.2farm.dev
+#       requireHttpsMetadata: 'false'
+#       swaggerClientId: WebGateway_Swagger
+#     dotnetEnv: Production
+#     redisHost: allfarms-st-redis
+#     rabbitmqHost: allfarms-st-rabbitmq
+#     elasticsearchUrl: http://allfarms-st-elasticsearch
+#   ingress:
+#     host: allfarms-st-product
+#   image:
+#     repository: 366414632657.dkr.ecr.ap-southeast-1.amazonaws.com/allfarms-service-product
+#     tag: latest
+
+# gateway-web sub-chart override
+gateway-web:
+  config:
+    selfUrl: https://api.2farm.dev
+    corsOrigins: https://admin.2farm.dev
+    globalConfigurationBaseUrl: http://allfarms-st-gateway-web
+    authServer:
+      authority: https://auth.2farm.dev
+      requireHttpsMetadata: 'false'
+      swaggerClientId: WebGateway_Swagger
+    dotnetEnv: Production
+    redisHost: allfarms-st-redis
+    rabbitmqHost: allfarms-st-rabbitmq
+    elasticsearchUrl: http://allfarms-st-elasticsearch
+  reRoutes:
+    accountService:
+      schema: http
+      host: allfarms-st-authserver
+      port: 80
+    identityService:
+      schema: http
+      host: allfarms-st-identity
+      port: 80
+    administrationService:
+      schema: http
+      host: allfarms-st-administration
+      port: 80
+    saasService:
+      schema: http
+      host: allfarms-st-saas
+      port: 80
+    productService:
+      schema: http
+      host: allfarms-st-product
+      port: 80
+  ingress:
+    host: api.2farm.dev
+  image:
+    repository: 366414632657.dkr.ecr.ap-southeast-1.amazonaws.com/allfarms-gateway-web
+    tag: latest
+    pullPolicy: Always
+
+# gateway-web-public sub-chart override
+gateway-web-public:
+  config:
+    selfUrl: https://public-api.2farm.dev
+    globalConfigurationBaseUrl: http://allfarms-st-gateway-web-public
+    authServer:
+      authority: https://auth.2farm.dev
+      requireHttpsMetadata: 'false'
+      swaggerClientId: WebGateway_Swagger
+      swaggerClientSecret: '1q2w3e*'
+    dotnetEnv: Production
+    redisHost: allfarms-st-redis
+    rabbitmqHost: allfarms-st-rabbitmq
+    elasticsearchUrl: http://allfarms-st-elasticsearch
+  reRoutes:
+    accountService:
+      schema: http
+      host: allfarms-st-authserver
+      port: 80
+    saasService:
+      schema: http
+      host: allfarms-st-saas
+      port: 80
+    administrationService:
+      schema: http
+      host: allfarms-st-administration
+      port: 80
+    productService:
+      schema: http
+      host: allfarms-st-product
+      port: 80
+  ingress:
+    host: public-api.2farm.dev
+  image:
+    repository: 366414632657.dkr.ecr.ap-southeast-1.amazonaws.com/allfarms-gateway-web-public
+    tag: latest
+    pullPolicy: Always
+
+# kibana:
+#   config:
+#     elasticsearchUrl: http://allfarms-st-elasticsearch:9200
+
+# dbmigrator sub-chart override
+dbmigrator:
+  config:
+    connectionStrings:
+      identityService: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_Identity;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+      administrationService: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_Administration;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+      saasService: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_Saas;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+      productService: 'Server=allfarms-st-sqldb,1433;Database=AllFarms_ProductService;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
+    dotnetEnv: Production
+    elasticsearchUrl: http://allfarms-st-elasticsearch
+  openIdDict:
+    applications:
+      authServerRootUrl: https://auth.2farm.dev/
+      angularRootUrl: https://allfarms-st-angular/
+      webRootUrl: https://admin.2farm.dev/
+      blazorRootUrl: https://allfarms-st-blazor/
+      blazorServerRootUrl: https://allfarms-st-blazor-server/
+      publicWebRootUrl: https://www.2farm.dev/
+      webGatewayRootUrl: https://api.2farm.dev/
+      publicWebGatewayRootUrl: https://api.2farm.dev-public/
+    resources:
+      accountServiceRootUrl: https://auth.2farm.dev/
+      administrationServiceRootUrl: https://administration.2farm.dev/
+      identityServiceRootUrl: https://id.2farm.dev/
+      saasServiceRootUrl: https://saas.2farm.dev/
+      productServiceRootUrl: https://allfarms-st-product/
+  image:
+    repository: 366414632657.dkr.ecr.ap-southeast-1.amazonaws.com/allfarms-db-migrator
+    tag: latest
+
+# Public Web application sub-chart override
+publicweb:
+  config:
+    selfUrl: https://www.2farm.dev
+    gatewayUrl: http://allfarms-st-gateway-web-public
+    authServer:
+      authority: https://auth.2farm.dev # should be domain on production (https://auth.mydomain.com)
+      requireHttpsMetadata: 'false'
+      isOnK8s: 'true'
+      metaAddress: https://auth.2farm.dev # should be container on production (http://allfarms-az-authserver)
+    dotnetEnv: Production
+    redisHost: allfarms-st-redis
+    rabbitmqHost: allfarms-st-rabbitmq
+    elasticsearchUrl: http://allfarms-st-elasticsearch
+  ingress:
+    host: www.2farm.dev
+  image:
+    repository: 366414632657.dkr.ecr.ap-southeast-1.amazonaws.com/allfarms-app-public-web
+    tag: latest
+    pullPolicy: Always
+# Web(MVC) back-office application sub-chart override
+web:
+  config:
+    selfUrl: https://admin.2farm.dev
+    gatewayUrl: http://allfarms-st-gateway-web
+    authServer:
+      authority: https://auth.2farm.dev # should be domain on production (https://auth.mydomain.com)
+      requireHttpsMetadata: 'false'
+      isOnK8s: 'true'
+      metaAddress: https://auth.2farm.dev # should be container on production (http://allfarms-az-authserver)
+    dotnetEnv: Production
+    redisHost: allfarms-st-redis
+    rabbitmqHost: allfarms-st-rabbitmq
+    elasticsearchUrl: http://allfarms-st-elasticsearch
+  ingress:
+    host: admin.2farm.dev
+  image:
+    repository: 366414632657.dkr.ecr.ap-southeast-1.amazonaws.com/allfarms-app-web
+    tag: latest
+    pullPolicy: Always
+# Default values for AllFarms.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: nginx
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ''
+
+imagePullSecrets: []
+nameOverride: ''
+fullnameOverride: ''
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ''
+
+podAnnotations: {}
+
+podSecurityContext:
+  {}
+  # fsGroup: 2000
+
+securityContext:
+  {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ''
+  annotations:
+    {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

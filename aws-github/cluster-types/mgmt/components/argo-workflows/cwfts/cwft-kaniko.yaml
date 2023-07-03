@@ -42,3 +42,41 @@ spec:
           - 'dir:///src/{{inputs.parameters.appName}}/'
           - '--destination'
           - '{{inputs.parameters.containerRegistryURL}}'
+    - name: build-push-v2
+      inputs:
+        parameters:
+          - name: appName
+          - name: branch
+          - name: containerRegistryURL
+          - name: gitUrlNoProtocol
+          - name: appSourcePath
+        artifacts:
+          - name: app-source
+            path: '/src/{{inputs.parameters.appName}}'
+            git:
+              repo: '{{inputs.parameters.gitUrlNoProtocol}}/{{inputs.parameters.appName}}.git'
+              branch: '{{inputs.parameters.branch}}'
+              singleBranch: true
+              insecureIgnoreHostKey: true
+              sshPrivateKeySecret:
+                name: ci-secrets
+                key: SSH_PRIVATE_KEY
+      volumes:
+        - name: docker-config
+          secret:
+            secretName: 'docker-config'
+      container:
+        image: gcr.io/kaniko-project/executor:latest
+        volumeMounts:
+          - name: docker-config
+            mountPath: /.docker
+        env:
+          - name: DOCKER_CONFIG
+            value: /.docker
+        args:
+          - '--dockerfile'
+          - '{{inputs.parameters.appSourcePath}}/Dockerfile'
+          - '--context'
+          - 'dir:///src/{{inputs.parameters.appName}}/'
+          - '--destination'
+          - '{{inputs.parameters.containerRegistryURL}}'

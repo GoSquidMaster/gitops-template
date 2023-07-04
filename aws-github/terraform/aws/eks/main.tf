@@ -194,18 +194,18 @@ module "eks" {
       disk_size = 50
     }
 
-    spot_node_group = {
-      instance_types = ["t3a.large"]
-      capacity_type  = "SPOT"
-      desired_size   = 1
-      min_size       = 1
-      max_size       = 2
-      # By default, the module creates a launch template to ensure tags are propagated to instances, etc.,
-      # so we need to disable it to use the default template provided by the AWS EKS managed node group service
-      use_custom_launch_template = false
+    # spot_node_group = {
+    #   instance_types = ["t3a.large"]
+    #   capacity_type  = "SPOT"
+    #   desired_size   = 1
+    #   min_size       = 1
+    #   max_size       = 2
+    #   # By default, the module creates a launch template to ensure tags are propagated to instances, etc.,
+    #   # so we need to disable it to use the default template provided by the AWS EKS managed node group service
+    #   use_custom_launch_template = false
 
-      disk_size = 50
-    }
+    #   disk_size = 50
+    # }
   }
 
 
@@ -335,7 +335,7 @@ resource "kubectl_manifest" "karpenter_provisioner" {
           values: ["t3a"]
         - key: "karpenter.k8s.aws/instance-size"
           operator: In
-          values: ["large"]
+          values: ["medium", "large"]
         - key: "karpenter.k8s.aws/instance-hypervisor"
           operator: In
           values: ["nitro"]
@@ -384,35 +384,35 @@ resource "kubectl_manifest" "karpenter_node_template" {
 
 # Example deployment using the [pause image](https://www.ianlewis.org/en/almighty-pause-container)
 # and starts with zero replicas
-resource "kubectl_manifest" "karpenter_example_deployment" {
-  yaml_body = <<-YAML
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: inflate
-    spec:
-      replicas: 0
-      selector:
-        matchLabels:
-          app: inflate
-      template:
-        metadata:
-          labels:
-            app: inflate
-        spec:
-          terminationGracePeriodSeconds: 0
-          containers:
-            - name: inflate
-              image: public.ecr.aws/eks-distro/kubernetes/pause:3.7
-              resources:
-                requests:
-                  cpu: 1
-  YAML
+# resource "kubectl_manifest" "karpenter_example_deployment" {
+#   yaml_body = <<-YAML
+#     apiVersion: apps/v1
+#     kind: Deployment
+#     metadata:
+#       name: inflate
+#     spec:
+#       replicas: 0
+#       selector:
+#         matchLabels:
+#           app: inflate
+#       template:
+#         metadata:
+#           labels:
+#             app: inflate
+#         spec:
+#           terminationGracePeriodSeconds: 0
+#           containers:
+#             - name: inflate
+#               image: public.ecr.aws/eks-distro/kubernetes/pause:3.7
+#               resources:
+#                 requests:
+#                   cpu: 1
+#   YAML
 
-  depends_on = [
-    helm_release.karpenter
-  ]
-}
+#   depends_on = [
+#     helm_release.karpenter
+#   ]
+# }
 
 ################################################################################
 # Supporting Resources

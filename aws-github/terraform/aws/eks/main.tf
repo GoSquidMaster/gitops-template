@@ -183,7 +183,7 @@ module "eks" {
   eks_managed_node_groups = {
     # Default node group - as provided by AWS EKS
     default_node_group = {
-      instance_types = ["m5.large"]
+      instance_types = ["t3a.medium"]
       desired_size   = 1
       min_size       = 1
       max_size       = 2
@@ -335,7 +335,7 @@ resource "kubectl_manifest" "karpenter_provisioner" {
           values: ["t3a"]
         - key: "karpenter.k8s.aws/instance-size"
           operator: In
-          values: ["medium", "large"]
+          values: ["small", "medium", "large"]
         - key: "karpenter.k8s.aws/instance-hypervisor"
           operator: In
           values: ["nitro"]

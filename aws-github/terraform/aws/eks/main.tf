@@ -339,9 +339,6 @@ resource "kubectl_manifest" "karpenter_provisioner" {
         - key: "karpenter.k8s.aws/instance-hypervisor"
           operator: In
           values: ["nitro"]
-      limits:
-        resources:
-          cpu: 1000
       providerRef:
         name: default
       consolidation:
@@ -449,7 +446,7 @@ module "vpc" {
 
   private_subnet_tags = {
     "kubernetes.io/role/internal-elb" = 1
-    "karpenter.sh/discovery" = local.name
+    "karpenter.sh/discovery"          = local.name
   }
 
   tags = local.tags

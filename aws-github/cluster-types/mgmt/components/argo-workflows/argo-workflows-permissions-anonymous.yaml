@@ -1,0 +1,26 @@
+#TODO: bypass permission for user system:anonymous can get/list/watch workflows on argo UI, because there is a issues with SSO 
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: argo-workflows-anonymous
+rules:
+- apiGroups: ["argoproj.io"]
+  resources: ["workflows","workflow-events", "workflowtemplates", "clusterworkflowtemplates", "cronworkflows", "eventsources", "sensors","workfloweventbindings"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["authorization.k8s.io"]
+  resources: ["selfsubjectaccessreviews"]
+  verbs: ["create"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: argo-workflows-anonymous
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-workflows-anonymous
+subjects:
+- kind: User
+  name: system:anonymous
+

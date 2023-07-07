@@ -1,7 +1,7 @@
 apiVersion: actions.summerwind.dev/v1alpha1
 kind: RunnerDeployment
 metadata:
-  name: actions-runner-metaphor
+  name: actions-runner
   annotations:
     argocd.argoproj.io/sync-wave: '10'
 spec:
@@ -13,12 +13,12 @@ spec:
       serviceAccountName: github-runner
       dockerdWithinRunnerContainer: true
       automountServiceAccountToken: true
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                - key: "eks.amazonaws.com/capacityType"
-                  operator: "In"
-                  values: ["ON_DEMAND"]
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #         - matchExpressions:
+      #           - key: "eks.amazonaws.com/capacityType"
+      #             operator: "In"
+      #             values: ["ON_DEMAND"]
       

@@ -1,0 +1,7 @@
+ingress:
+  host: cube.2farm.dev
+  annotations:
+    issuer: 'letsencrypt-prod'
+cubejs:
+  devMode: 'true'
+  dbName: 'AllFarms_FarmerService'

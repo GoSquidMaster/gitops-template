@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+spec:
+  serviceName: {{ .Release.Name }}-{{ .Chart.Name }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-{{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-{{ .Chart.Name }}
+    spec:
+      securityContext:
+        runAsUser: 0
+      containers:
+        - image: cubejs/cube:latest
+          name: {{ .Release.Name }}-{{ .Chart.Name }}
+          ports:
+            - name: http
+              containerPort: 4000
+          env:
+          - name: CUBEJS_DEV_MODE
+            value: "{{ .Values.cubejs.devMode }}"
+          - name: CUBEJS_DB_TYPE
+            value: "mssql"
+          - name: CUBEJS_DB_HOST
+            value: "shared-sqlserver-sqldb"
+          - name: CUBEJS_DB_NAME
+            value: "{{ .Values.cubejs.dbName }}"
+          - name: CUBEJS_DB_USER
+            value: "sa"
+          - name: CUBEJS_DB_PASS
+            valueFrom:
+              secretKeyRef:
+                name: sqlserver-es
+                key: SA_PASSWORD
+          volumeMounts:
+            - name: cube-persistent-storage
+              mountPath: "/cube/conf"
+      volumes:
+        - name: cube-persistent-storage
+          persistentVolumeClaim:
+            claimName: cube-pvc

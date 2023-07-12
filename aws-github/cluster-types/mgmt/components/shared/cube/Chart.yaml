@@ -1,0 +1,6 @@
+apiVersion: v2
+name: cube
+appVersion: "1.0"
+description: Runs Cube Instance
+version: 1.0.0
+type: application

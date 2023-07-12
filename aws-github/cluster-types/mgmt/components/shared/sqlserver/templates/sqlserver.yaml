@@ -28,7 +28,10 @@ spec:
               containerPort: 1433
           env:
           - name: SA_PASSWORD
-            value: {{ .Values.containers.sql.saPassword}}
+            valueFrom:
+              secretKeyRef:
+                name: sqlserver-es
+                key: SA_PASSWORD
           - name: ACCEPT_EULA
             value: "Y"
 {{- if eq .Release.Name "shared-sqlserver" }}

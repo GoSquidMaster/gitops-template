@@ -41,6 +41,19 @@ resource "vault_generic_secret" "regsitry_auth" {
 
   depends_on = [vault_mount.secret]
 }
+
+resource "vault_generic_secret" "shared_sqldb" {
+  path = "secret/shared/sqlserver"
+  # note: these secrets are not actually sensitive.
+  # do not hardcode passwords in git under normal circumstances.
+  data_json = jsonencode(
+    {
+      SA_PASSWORD = random_password.chartmuseum_password.result,
+    }
+  )
+
+  depends_on = [vault_mount.secret]
+}
 resource "vault_generic_secret" "development_metaphor" {
   path = "secret/development/metaphor"
   # note: these secrets are not actually sensitive.

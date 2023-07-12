@@ -54,6 +54,21 @@ resource "vault_generic_secret" "shared_sqldb" {
 
   depends_on = [vault_mount.secret]
 }
+
+resource "vault_generic_secret" "development_allfarms" {
+  path = "secret/development/allfarms/connection_string"
+  data_json = jsonencode(
+    {
+      IdentityService       = "Server=shared-sqlserver-sqldb.shared,1433;Database=AllFarms_Identity;User Id=sa;password=${jsondecode(vault_generic_secret.shared_sqldb.data_json)["SA_PASSWORD"]};TrustServerCertificate=True",
+      AdministrationService = "Server=shared-sqlserver-sqldb.shared,1433;Database=AllFarms_Administration;User Id=sa;password=${jsondecode(vault_generic_secret.shared_sqldb.data_json)["SA_PASSWORD"]};TrustServerCertificate=True",
+      SaasService           = "Server=shared-sqlserver-sqldb.shared,1433;Database=AllFarms_Saas;User Id=sa;password=${jsondecode(vault_generic_secret.shared_sqldb.data_json)["SA_PASSWORD"]};TrustServerCertificate=True"
+      FarmerService         = "Server=shared-sqlserver-sqldb.shared,1433;Database=AllFarms_FarmerService;User Id=sa;password=${jsondecode(vault_generic_secret.shared_sqldb.data_json)["SA_PASSWORD"]};TrustServerCertificate=True"
+      ProductService        = "Server=shared-sqlserver-sqldb.shared,1433;Database=AllFarms_ProductService;User Id=sa;password=${jsondecode(vault_generic_secret.shared_sqldb.data_json)["SA_PASSWORD"]};TrustServerCertificate=True"
+    }
+  )
+
+  depends_on = [vault_generic_secret.shared_sqldb]
+}
 resource "vault_generic_secret" "development_metaphor" {
   path = "secret/development/metaphor"
   # note: these secrets are not actually sensitive.

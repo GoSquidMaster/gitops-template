@@ -267,6 +267,8 @@ public-gateway-web:
 
 # dbmigrator sub-chart override
 dbmigrator:
+  vaultSecretPath: development/allfarms/connection_string
+  clusterSecretStoreName: vault-kv-secret
   config:
     connectionStrings:
       identityService: 'Server=shared-sqlserver-sqldb.shared,1433;Database=AllFarms_Identity;User Id=sa;password=myPassw@rd;TrustServerCertificate=True'
